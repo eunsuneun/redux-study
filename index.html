@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>태극당 with Redux</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    body {
+      width: 720px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 30px;
+      border: 1px solid black;
+      text-align: center;
+    }
+    ul, ol {
+      list-style: none;
+    }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/5.0.0-alpha.0/redux.min.js" integrity="sha512-6WJ7yVV5HDZwZ0RT5CM3FCTgTt5qC5BlfQ9bG43y0BowT5a3GXQqDYaoZgCk+i9vuB1Yj6KdBPQAU8Ra7tV32w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+  <div id="subject"></div>
+  <hr>
+  <div id="toc"></div>
+  <hr>
+  <div id="article"></div>
+  <div id="control"></div>
+  <script>
+    const subject = () => {
+    document.querySelector('#subject').innerHTML = `
+      <header>
+        <h1>태극당</h1>
+        이 사이트는 리덕스를 이용하였습니다.
+      </header>
+      `;
+    };
+    const TOC = () => {
+      const state = store.getState();
+      let i = 0;
+      let liTags = '';
+      while(i < state.contents.length) {
+        liTags = liTags + `
+          <li>
+            <a href="#n" onclick="
+              event.preventDefault();
+              const action = { type: 'SELECT', mode: 'read', id: ${state.contents[i].id} };
+              store.dispatch(action);
+            ">${state.contents[i].title}</a>
+          </li>
+        `;
+        i++;
+      };
+      document.querySelector('#toc').innerHTML = `
+      <nav>
+        <ol>${liTags}</ol>
+      </nav>
+      `;
+    };
+    const control = () => {
+      document.querySelector('#control').innerHTML = `
+      <div>
+        <ul>
+          <li><a href="#n" onclick="
+            event.preventDefault();
+            store.dispatch({type: 'CHANGE_MODE', mode: 'create'});
+          ">create</a></li>
+          <li>
+            <button onclick="
+              store.dispatch({
+                type: 'DELETE',
+              });
+            ">delete</button>
+          </li>
+        </ul>
+      </div>
+      `;
+    };
+    const article = () => {
+      const state = store.getState();
+      if(state.mode === 'create') {
+        document.querySelector('#article').innerHTML = `
+          <article>
+            <form onsubmit="
+              event.preventDefault();
+              let _title = this.title.value;
+              let _desc = this.desc.value;
+              let action = {
+                type: 'CREATE',
+                title: _title,
+                desc: _desc,
+              }
+              store.dispatch(action);
+            ">
+              <p>
+                <input type="text" name="title" placeholder="제목">
+              </p>
+              <p>
+                <textarea name="desc" placeholder="상세 설명"></textarea>
+              </p>
+              <p>
+                <button>완료</button>
+              </p>
+            </form>
+          </article>      
+        `;
+      }else if(state.mode === 'read') {
+        let i = 0;
+        let articleTitle, articleDesc;
+        while(i < state.contents.length) {
+          if(state.contents[i].id === state.selected_id) {
+            articleTitle = state.contents[i].title;          
+            articleDesc = state.contents[i].desc;          
+            break;
+          }
+          i++;
+        }
+        document.querySelector('#article').innerHTML = `
+        <article>
+          <h2>${articleTitle}</h2>
+          <p>${articleDesc}</p>
+        </article>
+        `;
+      }else if(state.mode === 'welcome') {
+        document.querySelector('#article').innerHTML = `
+        <article>
+          <h2>Welcome</h2>
+          <p>태극당 홈페이지를 찾아주셔서 감사합니다.</p>
+        </article>
+        `;
+      }
+    };
+    const reducer = (state, action) => {
+      if(state === undefined) {
+        return {
+          mode: 'welcome',
+          selected_id: 1,
+          max_id: 3,
+          contents: [
+            {
+              id: 1,
+              title: '나포나',
+              desc: '신선한 계란과 고소한 빵이 어우러진 풍미를 느낄 수 있어 디저트용으로 추천합니다.',
+            },
+            {
+              id: 2,
+              title: '버터빵',
+              desc: '부드러운 태극 식빵 사이에 달콤한 버터크림이 가득.',
+            },
+            {
+              id: 3,
+              title: '페스츄리롤',
+              desc: '고소한 아몬드크림과 바삭한 페스츄리의 식감이 환상의 조화를 이루는 페스츄리롤!',
+            }
+          ]
+        }
+      }
+      if(action.type === 'SELECT') {
+        const newState = {...state, mode: action.mode, selected_id: action.id};
+        return newState;
+      };
+      if(action.type === 'CHANGE_MODE') {
+        const newState = {...state, mode: action.mode};
+        return newState;
+      };
+      if(action.type === 'CREATE') {
+        const newMaxId = state.max_id + 1;
+        const newContents = [...state.contents, {id: newMaxId, title: action.title, desc: action.desc}];
+        const newState = {...state, mode: 'read', selected_id: newMaxId, max_id: newMaxId, contents: newContents};
+        console.log(newState);
+        return newState;
+      };
+      if(action.type === 'DELETE') {
+        const newContents = [];
+        let i = 0;
+        while(i < state.contents.length) {
+          if(state.selected_id !== state.contents[i].id) {
+            newContents.push(state.contents[i]);
+          }
+          i++;
+        }
+        const newState = {...state, mode: 'welcome', contents: newContents};
+        console.log(newState);
+        return newState;
+      }
+    };
+    const store = Redux.createStore(reducer);
+    store.subscribe(article);
+    store.subscribe(TOC);
+    subject();
+    TOC();
+    control();
+    article();
+  </script>
+</body>
+</html>

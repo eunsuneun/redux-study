@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>리덕스가 없다면</title>
+  <style>
+    .container {
+      border: 3px solid black;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="red"></div>
+  <div id="green"></div>
+  <script>
+    const onClickButton = () => {
+      document.querySelector('#component-red').style.backgroundColor = 'red';
+    };
+    const red = () => {
+      document.querySelector('#red').innerHTML = `
+        <div class="container" id="component-red">
+          <h1>red</h1>
+          <input type="button" value="fire" onclick="onClickButton()"/>
+        </div>
+      `;
+    };
+    red();
+  </script>
+</body>
+</html>
